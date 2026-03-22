@@ -1,0 +1,2 @@
+
+1d4d6cea2d60221da612dbe0db772d99901d2760	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/@babel%2fhelpers","integrity":null,"time":1774174889069,"size":"262","metadata":{"time":1774174889069,"url":"http://registry.npm.taobao.org/@babel%2fhelpers","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/@babel%2fhelpers"},"options":{"compress":true},"status":301}}

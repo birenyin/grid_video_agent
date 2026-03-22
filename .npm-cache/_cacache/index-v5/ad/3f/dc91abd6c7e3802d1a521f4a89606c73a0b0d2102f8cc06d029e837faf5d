@@ -1,0 +1,2 @@
+
+b94abfb5bbd3f9fff11b2c48a4623b1e2ca6a516	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/escalade","integrity":null,"time":1774174889625,"size":"262","metadata":{"time":1774174889625,"url":"http://registry.npm.taobao.org/escalade","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/escalade"},"options":{"compress":true},"status":301}}

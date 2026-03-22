@@ -1,0 +1,2 @@
+
+b0f88be3f1f46ba7fbe7ac4533916da9bb128c7d	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/nanoid","integrity":null,"time":1774174889712,"size":"262","metadata":{"time":1774174889712,"url":"http://registry.npm.taobao.org/nanoid","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/nanoid"},"options":{"compress":true},"status":301}}

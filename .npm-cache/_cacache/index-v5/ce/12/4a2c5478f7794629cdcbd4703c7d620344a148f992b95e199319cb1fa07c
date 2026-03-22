@@ -1,0 +1,2 @@
+
+6731a200cc6cfb979ede569cf884aa6c11ef685c	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/@esbuild%2flinux-ia32","integrity":null,"time":1774174889698,"size":"262","metadata":{"time":1774174889698,"url":"http://registry.npm.taobao.org/@esbuild%2flinux-ia32","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/@esbuild%2flinux-ia32"},"options":{"compress":true},"status":301}}

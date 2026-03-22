@@ -1,0 +1,2 @@
+
+4218415c0bbdfb8a26650808e57ca6dc1705fdf2	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/loose-envify","integrity":null,"time":1774174888817,"size":"262","metadata":{"time":1774174888817,"url":"http://registry.npm.taobao.org/loose-envify","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:28 GMT","location":"https://registry.npmmirror.com/loose-envify"},"options":{"compress":true},"status":301}}

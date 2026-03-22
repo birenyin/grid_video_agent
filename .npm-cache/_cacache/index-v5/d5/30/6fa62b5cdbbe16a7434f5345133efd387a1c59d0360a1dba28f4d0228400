@@ -1,0 +1,2 @@
+
+059c8c64bc5609d5776f335f7bcac60b7b87d478	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/@esbuild%2fdarwin-arm64","integrity":null,"time":1774174889701,"size":"262","metadata":{"time":1774174889701,"url":"http://registry.npm.taobao.org/@esbuild%2fdarwin-arm64","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/@esbuild%2fdarwin-arm64"},"options":{"compress":true},"status":301}}

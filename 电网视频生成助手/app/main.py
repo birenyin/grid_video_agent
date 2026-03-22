@@ -27,7 +27,9 @@ async def lifespan(_: FastAPI):
 
 def create_app() -> FastAPI:
     settings = get_settings()
-    web_dir = settings.project_root / "app" / "web"
+    legacy_web_dir = settings.project_root / "app" / "web"
+    dist_web_dir = legacy_web_dir / "dist"
+    web_dir = dist_web_dir if dist_web_dir.exists() else legacy_web_dir
 
     app = FastAPI(
         title=settings.app_name,

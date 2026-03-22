@@ -1,0 +1,2 @@
+
+8bd42539236173aefa3b1abe66e6775f17cafdca	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/@babel%2fcompat-data","integrity":null,"time":1774174889249,"size":"262","metadata":{"time":1774174889249,"url":"http://registry.npm.taobao.org/@babel%2fcompat-data","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/@babel%2fcompat-data"},"options":{"compress":true},"status":301}}

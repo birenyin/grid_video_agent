@@ -27,8 +27,8 @@ class ConsoleRouteTests(unittest.TestCase):
             client, _ = self._build_client(Path(temp_dir))
             response = client.get("/")
             self.assertEqual(response.status_code, 200)
-            self.assertIn("电网视频生成智能体", response.text)
-            self.assertIn("RPA Feed", response.text)
+            self.assertIn("<div id=\"root\"></div>", response.text)
+            self.assertIn("/web/assets/", response.text)
 
     def test_project_list_and_detail_routes_return_created_project(self) -> None:
         with workspace_tempdir() as temp_dir:

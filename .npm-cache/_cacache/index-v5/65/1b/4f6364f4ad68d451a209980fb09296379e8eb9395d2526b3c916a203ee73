@@ -1,0 +1,2 @@
+
+2e64a0836e8a54162922c47131fcc7ab5f081c63	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/@babel%2ftraverse","integrity":null,"time":1774174889068,"size":"262","metadata":{"time":1774174889068,"url":"http://registry.npm.taobao.org/@babel%2ftraverse","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/@babel%2ftraverse"},"options":{"compress":true},"status":301}}

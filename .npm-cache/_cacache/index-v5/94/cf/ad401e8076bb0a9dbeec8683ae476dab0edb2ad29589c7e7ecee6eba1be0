@@ -1,0 +1,2 @@
+
+3993a8a553c3674880fecf30192b281aa136ed2b	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/scheduler","integrity":null,"time":1774174888822,"size":"262","metadata":{"time":1774174888822,"url":"http://registry.npm.taobao.org/scheduler","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:28 GMT","location":"https://registry.npmmirror.com/scheduler"},"options":{"compress":true},"status":301}}

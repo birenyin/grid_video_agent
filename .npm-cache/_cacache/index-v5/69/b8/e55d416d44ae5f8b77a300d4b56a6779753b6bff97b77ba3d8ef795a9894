@@ -1,0 +1,2 @@
+
+d13a4082c6972dbfe9cb8be44190f51a9876706a	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/terser","integrity":null,"time":1774174888733,"size":"262","metadata":{"time":1774174888733,"url":"http://registry.npm.taobao.org/terser","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:28 GMT","location":"https://registry.npmmirror.com/terser"},"options":{"compress":true},"status":301}}
