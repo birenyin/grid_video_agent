@@ -21,6 +21,8 @@ from app.models.project import (
     ProviderAttemptRecord,
     RenderProjectRequest,
     RenderProjectResponse,
+    WorkflowGenerateImagesRequest,
+    WorkflowScriptUpdateRequest,
 )
 from app.services.project_service import ProjectOrchestrator
 
@@ -92,6 +94,67 @@ def render_project(
         or project.artifacts.publish_package is None
     ):
         raise HTTPException(status_code=500, detail="Render completed without all expected artifacts.")
+
+    attempt_count = len(orchestrator.database.list_provider_attempts(project_id))
+    return RenderProjectResponse(
+        project_id=project.project_id,
+        status=project.status,
+        final_video_path=project.artifacts.composition.video_path,
+        audio_path=project.artifacts.voice.audio_path,
+        subtitle_path=project.artifacts.subtitles.subtitle_path,
+        publish_payload_path=project.artifacts.publish_package.payload_path,
+        attempt_count=attempt_count,
+    )
+
+
+@router.put("/{project_id}/workflow/script", response_model=ProjectDetailResponse)
+def update_workflow_script(
+    project_id: str,
+    request: WorkflowScriptUpdateRequest,
+    orchestrator: ProjectOrchestrator = Depends(get_orchestrator),
+) -> ProjectDetailResponse:
+    try:
+        project = orchestrator.update_workflow_script(project_id, request)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    attempts = orchestrator.database.list_provider_attempts(project.project_id)
+    return build_project_detail_response(project, attempts, orchestrator.settings)
+
+
+@router.post("/{project_id}/workflow/images", response_model=ProjectDetailResponse)
+def generate_workflow_images(
+    project_id: str,
+    request: WorkflowGenerateImagesRequest,
+    orchestrator: ProjectOrchestrator = Depends(get_orchestrator),
+) -> ProjectDetailResponse:
+    try:
+        project = orchestrator.generate_workflow_images(project_id, request)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    attempts = orchestrator.database.list_provider_attempts(project.project_id)
+    return build_project_detail_response(project, attempts, orchestrator.settings)
+
+
+@router.post("/{project_id}/workflow/render", response_model=RenderProjectResponse)
+def render_workflow_project(
+    project_id: str,
+    request: RenderProjectRequest,
+    orchestrator: ProjectOrchestrator = Depends(get_orchestrator),
+) -> RenderProjectResponse:
+    try:
+        project = orchestrator.render_workflow_project(project_id, request)
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except RuntimeError as exc:
+        raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    if (
+        project.artifacts.composition is None
+        or project.artifacts.voice is None
+        or project.artifacts.subtitles is None
+        or project.artifacts.publish_package is None
+    ):
+        raise HTTPException(status_code=500, detail="Workflow render completed without all expected artifacts.")
 
     attempt_count = len(orchestrator.database.list_provider_attempts(project_id))
     return RenderProjectResponse(

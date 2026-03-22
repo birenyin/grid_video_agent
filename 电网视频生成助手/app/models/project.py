@@ -43,6 +43,7 @@ class ProjectArtifacts(BaseModel):
     preview_video_path: str = ""
     last_render_mode: str = ""
     resolved_reference_image_path: str = ""
+    shot_reference_paths: dict[str, str] = Field(default_factory=dict)
     voice: TTSResult | None = None
     subtitles: SubtitleResult | None = None
     shot_images: list[ImageGenerationResult] = Field(default_factory=list)
@@ -116,6 +117,7 @@ class RenderProjectRequest(BaseModel):
     render_mode: str = Field(default="video_audio", pattern="^(image_audio|video_audio)$")
     aspect_ratio: str | None = Field(default=None, pattern="^(9:16|16:9)$")
     reference_image_path: str | None = None
+    reuse_existing_shot_images: bool = True
 
 
 class RenderProjectResponse(BaseModel):
@@ -171,3 +173,22 @@ class ProjectDetailResponse(BaseModel):
     project: ProjectRecord
     attempts: list[ProviderAttemptRecord] = Field(default_factory=list)
     asset_links: ProjectAssetLinks = Field(default_factory=ProjectAssetLinks)
+
+
+class WorkflowScriptUpdateRequest(BaseModel):
+    title: str = Field(..., min_length=2, max_length=80)
+    full_script: str = Field(..., min_length=20)
+    summary: str | None = None
+    mode: str = Field(default="news_mode", pattern="^(explain_mode|news_mode)$")
+    target_duration_seconds: int = Field(default=60, ge=15, le=150)
+    aspect_ratio: str = Field(default="9:16", pattern="^(9:16|16:9)$")
+    regenerate_storyboard: bool = False
+    storyboard: list[StoryboardShot] = Field(default_factory=list)
+
+
+class WorkflowGenerateImagesRequest(BaseModel):
+    aspect_ratio: str | None = Field(default=None, pattern="^(9:16|16:9)$")
+    render_mode: str = Field(default="image_audio", pattern="^(image_audio|video_audio)$")
+    reference_image_path: str | None = None
+    shot_reference_overrides: dict[str, str] = Field(default_factory=dict)
+    shot_ids: list[int] = Field(default_factory=list)

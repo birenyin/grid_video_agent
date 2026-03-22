@@ -7,407 +7,682 @@
     <link rel="stylesheet" href="/web/styles.css" />
   </head>
   <body>
-    <div class="page-shell">
-      <aside class="sidebar card">
-        <div class="brand-block">
-          <p class="eyebrow">Grid Video Console</p>
-          <h1>电网视频生成智能体</h1>
-          <p class="muted">从正文、链接或 RPA 收稿，一路生成脚本、镜头、配音和成片。</p>
-        </div>
-        <div class="sidebar-actions">
-          <button id="refresh-projects" class="ghost-button" type="button">刷新项目</button>
-        </div>
-        <div id="project-list" class="project-list"></div>
-      </aside>
-
-      <main class="main-panel">
-        <section class="hero card">
+    <div class="studio-app">
+      <header class="topbar">
+        <div class="topbar-brand">
+          <div class="brand-dot"></div>
           <div>
-            <p class="eyebrow">Operator Mode</p>
-            <h2>创建项目</h2>
-            <p class="muted">
-              先生成草稿，再按需要补参考人物图、切到图生视频，最后导出发布素材。
-            </p>
+            <p class="eyebrow">Grid Dispatch Studio</p>
+            <h1>电网视频生成智能体</h1>
           </div>
-          <div class="hero-status" id="global-status">就绪</div>
-        </section>
+        </div>
+        <div class="topbar-status">
+          <span id="global-status" class="status-pill info">系统就绪</span>
+        </div>
+        <div class="topbar-actions">
+          <button id="open-create-drawer" class="top-button" type="button">新建项目</button>
+          <button id="open-automation-drawer" class="top-button" type="button">自动任务</button>
+          <button id="refresh-projects" class="top-button" type="button">刷新</button>
+          <button id="run-oneclick-button" class="top-button top-button-primary" type="button">一键成片</button>
+        </div>
+      </header>
 
-        <section class="card">
-          <div class="tab-row">
-            <button class="tab-button active" data-pane="pane-text" type="button">正文输入</button>
-            <button class="tab-button" data-pane="pane-script" type="button">现成脚本</button>
-            <button class="tab-button" data-pane="pane-url" type="button">网页链接</button>
-            <button class="tab-button" data-pane="pane-feed" type="button">RPA Feed</button>
-          </div>
-
-          <div class="pane active" id="pane-text">
-            <form id="form-create-text" class="form-grid">
-              <label>
-                标题
-                <input name="title" type="text" placeholder="例如：国家电网一分钟科普" />
-              </label>
-              <label>
-                模式
-                <select name="mode">
-                  <option value="news_mode">news_mode</option>
-                  <option value="explain_mode">explain_mode</option>
-                </select>
-              </label>
-              <label>
-                时长（秒）
-                <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
-              </label>
-              <label>
-                画幅
-                <select name="aspect_ratio">
-                  <option value="9:16">9:16 竖屏</option>
-                  <option value="16:9">16:9 横屏</option>
-                </select>
-              </label>
-              <label class="full">
-                来源链接
-                <input name="source_url" type="text" placeholder="可选，保留来源时填写" />
-              </label>
-              <label class="full">
-                正文
-                <textarea
-                  name="content_text"
-                  rows="8"
-                  placeholder="粘贴新闻正文、公众号摘录或人工整理内容"
-                  required
-                ></textarea>
-              </label>
-              <div class="full action-row">
-                <button class="primary-button" type="submit">生成项目草稿</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="pane" id="pane-script">
-            <form id="form-create-script" class="form-grid">
-              <label>
-                标题
-                <input name="title" type="text" placeholder="例如：国家电网一分钟科普" required />
-              </label>
-              <label>
-                模式
-                <select name="mode">
-                  <option value="explain_mode">explain_mode</option>
-                  <option value="news_mode">news_mode</option>
-                </select>
-              </label>
-              <label>
-                时长（秒）
-                <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
-              </label>
-              <label>
-                画幅
-                <select name="aspect_ratio">
-                  <option value="9:16">9:16 竖屏</option>
-                  <option value="16:9">16:9 横屏</option>
-                </select>
-              </label>
-              <label class="full">
-                脚本
-                <textarea
-                  name="full_script"
-                  rows="8"
-                  placeholder="粘贴已经整理好的整篇口播稿"
-                  required
-                ></textarea>
-              </label>
-              <div class="full action-row">
-                <button class="primary-button" type="submit">从脚本建项目</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="pane" id="pane-url">
-            <form id="form-create-url" class="form-grid">
-              <label class="full">
-                网页链接
-                <input
-                  name="source_url"
-                  type="text"
-                  placeholder="例如：https://www.sgcc.com.cn/..."
-                  required
-                />
-              </label>
-              <label>
-                自定义标题
-                <input name="title" type="text" placeholder="可选，不填则自动提取" />
-              </label>
-              <label>
-                模式
-                <select name="mode">
-                  <option value="news_mode">news_mode</option>
-                  <option value="explain_mode">explain_mode</option>
-                </select>
-              </label>
-              <label>
-                时长（秒）
-                <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
-              </label>
-              <label>
-                画幅
-                <select name="aspect_ratio">
-                  <option value="9:16">9:16 竖屏</option>
-                  <option value="16:9">16:9 横屏</option>
-                </select>
-              </label>
-              <div class="full action-row">
-                <button class="primary-button" type="submit">抓取网页并建项目</button>
-              </div>
-            </form>
-          </div>
-
-          <div class="pane" id="pane-feed">
-            <form id="form-create-feed" class="form-grid">
-              <label class="full">
-                Feed 路径
-                <input
-                  name="feed_path"
-                  type="text"
-                  placeholder="例如：F:\AICODING\电网视频生成助手\data\input\rpa_raw_feed.json"
-                  required
-                />
-              </label>
-              <label>
-                自定义标题
-                <input name="title" type="text" placeholder="可选，不填则用自动选题" />
-              </label>
-              <label>
-                规划模式
-                <select name="plan_mode">
-                  <option value="rule">rule</option>
-                  <option value="auto">auto</option>
-                  <option value="api">api</option>
-                </select>
-              </label>
-              <label>
-                时长（秒）
-                <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
-              </label>
-              <label>
-                画幅
-                <select name="aspect_ratio">
-                  <option value="9:16">9:16 竖屏</option>
-                  <option value="16:9">16:9 横屏</option>
-                </select>
-              </label>
-              <label class="checkbox-row">
-                <input name="render_preview_bundle" type="checkbox" checked />
-                生成预览包（封面 / GIF / 预览 MP4）
-              </label>
-              <div class="full action-row">
-                <button class="primary-button" type="submit">从 RPA Feed 建项目</button>
-              </div>
-            </form>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="section-shell">
-            <div class="section-title-row">
+      <div class="workspace">
+        <aside class="left-panel panel">
+          <section class="panel-block project-block">
+            <div class="section-head">
               <div>
-                <p class="eyebrow">Automation</p>
-                <h2>自动抓站点任务</h2>
-                <p class="muted">服务运行时会按频率自动抓站点、建项目，并按配置自动渲染。</p>
+                <p class="section-kicker">Projects</p>
+                <h2>项目列表</h2>
+              </div>
+              <span id="project-count" class="mini-count">0</span>
+            </div>
+            <div id="project-list" class="project-list"></div>
+          </section>
+
+          <section class="panel-block shot-block">
+            <div class="section-head">
+              <div>
+                <p class="section-kicker">Shots</p>
+                <h2>分镜列表</h2>
+              </div>
+              <span id="shot-count-chip" class="mini-count">0</span>
+            </div>
+            <div id="project-meta-compact" class="project-meta-compact">
+              选中项目后，这里会显示项目概况和当前工作流状态。
+            </div>
+            <div id="shot-list" class="shot-list"></div>
+          </section>
+        </aside>
+
+        <main class="center-panel">
+          <section class="panel studio-stage">
+            <div class="studio-head">
+              <div>
+                <p class="section-kicker">Workspace</p>
+                <h2 id="detail-title">请选择左侧项目</h2>
+                <div id="detail-badges" class="badge-row"></div>
+              </div>
+              <div class="preview-switcher">
+                <button class="preview-mode-button active" data-preview-mode="shot" type="button">当前镜头</button>
+                <button class="preview-mode-button" data-preview-mode="final" type="button">最终成片</button>
+                <button class="preview-mode-button" data-preview-mode="preview" type="button">RPA 预览</button>
               </div>
             </div>
 
-            <form id="form-create-automation" class="form-grid">
-              <label>
-                任务名称
-                <input name="name" type="text" placeholder="例如：电网行业早报" required />
-              </label>
-              <label>
-                站点集合
-                <select name="source_set">
-                  <option value="mixed">mixed</option>
-                  <option value="official">official</option>
-                </select>
-              </label>
-              <label>
-                运行间隔（分钟）
-                <input name="interval_minutes" type="number" min="5" max="10080" value="240" />
-              </label>
-              <label>
-                规划模式
-                <select name="plan_mode">
-                  <option value="rule">rule</option>
-                  <option value="auto">auto</option>
-                  <option value="api">api</option>
-                </select>
-              </label>
-              <label>
-                每站点抓取上限
-                <input name="per_source_limit" type="number" min="1" max="10" value="3" />
-              </label>
-              <label>
-                总抓取上限
-                <input name="total_fetch_limit" type="number" min="1" max="20" value="8" />
-              </label>
-              <label>
-                视频模式
-                <select name="mode">
-                  <option value="news_mode">news_mode</option>
-                  <option value="explain_mode">explain_mode</option>
-                </select>
-              </label>
-              <label>
-                时长（秒）
-                <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
-              </label>
-              <label>
-                画幅
-                <select name="aspect_ratio">
-                  <option value="9:16">9:16 竖屏</option>
-                  <option value="16:9">16:9 横屏</option>
-                </select>
-              </label>
-              <label>
-                自动渲染模式
-                <select name="render_mode">
-                  <option value="image_audio">image_audio</option>
-                  <option value="video_audio">video_audio</option>
-                </select>
-              </label>
-              <label>
-                音色
-                <select name="preferred_voice">
-                  <option value="professional_cn_male">professional_cn_male</option>
-                  <option value="professional_cn_female">professional_cn_female</option>
-                </select>
-              </label>
-              <label>
-                发布模式
-                <select name="publish_mode">
-                  <option value="draft">draft</option>
-                  <option value="direct">direct</option>
-                </select>
-              </label>
-              <label class="full">
-                参考人物图路径
-                <input
-                  name="reference_image_path"
-                  type="text"
-                  placeholder="例如：F:\AICODING\需求\电网人物形象.png"
-                />
-              </label>
-              <p class="field-hint full">不填写参考图时，系统会自动使用默认人物图：F:\AICODING\需求\电网人物形象.png</p>
-              <label class="checkbox-row">
-                <input name="auto_render" type="checkbox" checked />
-                抓取后自动渲染项目
-              </label>
-              <div class="full action-row">
-                <button class="primary-button" type="submit">创建自动任务</button>
-              </div>
-            </form>
-
-            <div id="automation-list" class="automation-list"></div>
-          </div>
-        </section>
-
-        <section class="card detail-card">
-          <div class="section-title-row">
-            <div>
-              <p class="eyebrow">Project Workspace</p>
-              <h2 id="detail-title">请选择左侧项目</h2>
+            <div id="detail-empty" class="empty-state">
+              先新建一个项目，或者从左侧选择已有项目，工作台就会自动切到可编辑状态。
             </div>
-            <div id="detail-badges" class="badge-row"></div>
-          </div>
 
-          <div id="detail-empty" class="empty-state">
-            这里会显示项目详情、镜头、预览素材和最终成片。
-          </div>
+            <div id="detail-content" class="detail-content hidden">
+              <div class="workflow-ribbon">
+                <button class="workflow-step-button active" data-workflow-step="script" type="button">1. 文案与分镜</button>
+                <button class="workflow-step-button" data-workflow-step="images" type="button">2. 镜头图片</button>
+                <button class="workflow-step-button" data-workflow-step="render" type="button">3. 最终成片</button>
+              </div>
 
-          <div id="detail-content" class="detail-content hidden">
-            <section class="mini-card">
-              <h3>渲染诊断</h3>
-              <div id="diagnostics-panel" class="diagnostics-grid"></div>
-            </section>
-
-            <div class="two-column">
-              <section class="mini-card">
-                <h3>摘要与脚本</h3>
-                <div id="summary-block"></div>
-                <pre id="script-block" class="code-block"></pre>
-              </section>
-
-              <section class="mini-card">
-                <h3>渲染设置</h3>
-                <form id="form-render" class="form-grid compact">
-                  <label>
-                    音色
-                    <select name="preferred_voice">
-                      <option value="professional_cn_male">professional_cn_male</option>
-                      <option value="professional_cn_female">professional_cn_female</option>
-                      <option value="zh_male_m191_uranus_bigtts">云舟 2.0</option>
-                      <option value="zh_female_xiaohe_uranus_bigtts">小何 2.0</option>
-                    </select>
-                  </label>
-                  <label>
-                    渲染模式
-                    <select name="render_mode">
-                      <option value="video_audio">video_audio</option>
-                      <option value="image_audio">image_audio</option>
-                    </select>
-                  </label>
-                  <label>
-                    输出画幅
-                    <select name="aspect_ratio">
-                      <option value="">沿用项目</option>
-                      <option value="9:16">9:16 竖屏</option>
-                      <option value="16:9">16:9 横屏</option>
-                    </select>
-                  </label>
-                  <label>
-                    发布模式
-                    <select name="publish_mode">
-                      <option value="draft">draft</option>
-                      <option value="direct">direct</option>
-                    </select>
-                  </label>
-                  <label class="full">
-                    参考人物图路径
-                    <input
-                      name="reference_image_path"
-                      type="text"
-                      placeholder="例如：F:\AICODING\需求\电网人物形象.png"
-                    />
-                  </label>
-                  <p class="field-hint full">不填时会自动使用默认人物图，诊断面板会显示这次实际用到的参考图。</p>
-                  <div class="full action-row">
-                    <button id="render-button" class="primary-button" type="submit">开始渲染</button>
+              <div class="stage-grid">
+                <div class="preview-panel">
+                  <div class="preview-frame">
+                    <div id="preview-stage" class="preview-stage"></div>
                   </div>
-                </form>
-              </section>
+                  <div class="preview-footer">
+                    <div>
+                      <strong id="preview-title">当前还没有可预览内容</strong>
+                      <p id="preview-subtitle" class="preview-subtitle">完成文案拆分或镜头生成后，这里会显示实时预览。</p>
+                    </div>
+                    <div class="preview-meta">
+                      <span id="preview-provider-chip" class="info-chip">等待素材</span>
+                      <span id="preview-duration-chip" class="info-chip">--</span>
+                    </div>
+                  </div>
+                </div>
+
+                <aside class="diagnostic-rail">
+                  <div class="section-head compact">
+                    <div>
+                      <p class="section-kicker">Diagnostics</p>
+                      <h3>渲染诊断</h3>
+                    </div>
+                  </div>
+                  <div id="diagnostics-panel" class="diagnostics-panel"></div>
+                </aside>
+              </div>
+
+              <div class="timeline-shell">
+                <div class="section-head compact">
+                  <div>
+                    <p class="section-kicker">Timeline</p>
+                    <h3>时间线速览</h3>
+                  </div>
+                </div>
+                <div id="timeline-strip" class="timeline-strip"></div>
+              </div>
             </div>
+          </section>
+        </main>
 
-            <section class="mini-card">
-              <h3>项目文件</h3>
-              <div id="artifact-links" class="link-grid"></div>
+        <aside class="right-panel panel">
+          <div class="section-head inspector-head">
+            <div>
+              <p class="section-kicker">Inspector</p>
+              <h2>分步工作流</h2>
+            </div>
+          </div>
+
+          <div class="inspector-tabs">
+            <button class="inspector-tab active" data-inspector-tab="script" type="button">文案</button>
+            <button class="inspector-tab" data-inspector-tab="visual" type="button">画面</button>
+            <button class="inspector-tab" data-inspector-tab="role" type="button">角色</button>
+            <button class="inspector-tab" data-inspector-tab="voice" type="button">配音</button>
+            <button class="inspector-tab" data-inspector-tab="music" type="button">音乐</button>
+            <button class="inspector-tab" data-inspector-tab="output" type="button">输出</button>
+          </div>
+
+          <div id="inspector-empty" class="empty-state small">
+            选中项目后，右侧会显示和剪映类似的编辑面板。
+          </div>
+
+          <div id="inspector-content" class="inspector-content hidden">
+            <section id="inspector-pane-script" class="inspector-pane active">
+              <div class="inspector-scroll">
+                <div class="editor-card">
+                  <div class="card-head">
+                    <div>
+                      <p class="section-kicker">Step 1</p>
+                      <h3>项目文案</h3>
+                    </div>
+                    <div class="inline-actions">
+                      <button id="save-script-button" class="action-button" type="button">保存文案</button>
+                      <button id="regenerate-storyboard-button" class="action-button primary" type="button">重新拆分分镜</button>
+                    </div>
+                  </div>
+                  <div class="field-grid">
+                    <label>
+                      标题
+                      <input id="workflow-title" type="text" />
+                    </label>
+                    <label>
+                      模式
+                      <select id="workflow-mode">
+                        <option value="news_mode">news_mode</option>
+                        <option value="explain_mode">explain_mode</option>
+                      </select>
+                    </label>
+                    <label>
+                      时长（秒）
+                      <input id="workflow-duration" type="number" min="15" max="150" />
+                    </label>
+                    <label>
+                      画幅
+                      <select id="workflow-aspect-ratio">
+                        <option value="9:16">9:16 竖屏</option>
+                        <option value="16:9">16:9 横屏</option>
+                      </select>
+                    </label>
+                    <label class="field-span">
+                      摘要
+                      <textarea id="workflow-summary" rows="3"></textarea>
+                    </label>
+                    <label class="field-span">
+                      完整脚本
+                      <textarea id="workflow-full-script" rows="8"></textarea>
+                    </label>
+                  </div>
+                </div>
+
+                <div class="editor-card">
+                  <div class="card-head">
+                    <div>
+                      <p class="section-kicker">Selected Shot</p>
+                      <h3 id="selected-shot-script-title">当前镜头</h3>
+                    </div>
+                  </div>
+                  <div class="field-grid">
+                    <label>
+                      镜头时长（秒）
+                      <input id="script-shot-duration" type="number" min="3" max="8" />
+                    </label>
+                    <label>
+                      镜头类型
+                      <select id="script-shot-type">
+                        <option value="host">host</option>
+                        <option value="explainer">explainer</option>
+                        <option value="broll">broll</option>
+                        <option value="data">data</option>
+                      </select>
+                    </label>
+                    <label class="field-span">
+                      口播
+                      <textarea id="script-shot-narration" rows="4"></textarea>
+                    </label>
+                    <label class="field-span">
+                      字幕
+                      <textarea id="script-shot-subtitle" rows="3"></textarea>
+                    </label>
+                  </div>
+                </div>
+              </div>
             </section>
 
-            <section class="mini-card">
-              <h3>预览与成片</h3>
-              <div id="media-gallery" class="media-gallery"></div>
+            <section id="inspector-pane-visual" class="inspector-pane">
+              <div class="inspector-scroll">
+                <div class="editor-card">
+                  <div class="card-head">
+                    <div>
+                      <p class="section-kicker">Step 2</p>
+                      <h3>当前镜头画面</h3>
+                    </div>
+                    <div class="inline-actions">
+                      <button id="generate-current-image-button" class="action-button" type="button">生成当前镜头</button>
+                      <button id="generate-all-images-button" class="action-button primary" type="button">批量生成全部</button>
+                    </div>
+                  </div>
+                  <div id="visual-shot-preview" class="shot-preview-card">当前镜头还没有图像素材。</div>
+                  <div class="field-grid">
+                    <label class="field-span">
+                      中文提示词
+                      <textarea id="visual-prompt-cn" rows="5"></textarea>
+                    </label>
+                    <label class="field-span">
+                      英文提示词
+                      <textarea id="visual-prompt-en" rows="4"></textarea>
+                    </label>
+                    <label>
+                      运镜
+                      <input id="visual-camera" type="text" />
+                    </label>
+                    <label>
+                      关键词
+                      <input id="visual-keywords" type="text" placeholder="多个关键词用中文逗号分隔" />
+                    </label>
+                    <label class="field-span">
+                      安全约束
+                      <textarea id="visual-safety" rows="3"></textarea>
+                    </label>
+                    <label class="checkbox-line field-span">
+                      <input id="visual-real-material" type="checkbox" />
+                      这个镜头更适合真实素材，不强制走 AI 视频
+                    </label>
+                  </div>
+                </div>
+              </div>
             </section>
 
-            <section class="mini-card">
-              <h3>分镜</h3>
-              <div id="storyboard-list" class="storyboard-list"></div>
+            <section id="inspector-pane-role" class="inspector-pane">
+              <div class="inspector-scroll">
+                <div class="editor-card">
+                  <div class="card-head">
+                    <div>
+                      <p class="section-kicker">Reference</p>
+                      <h3>人物与参考图</h3>
+                    </div>
+                  </div>
+                  <div class="field-grid">
+                    <label class="field-span">
+                      默认参考图
+                      <input id="default-reference-image" type="text" placeholder="不填就自动使用默认人物图" />
+                    </label>
+                    <label class="field-span">
+                      当前镜头参考图
+                      <input id="selected-shot-reference" type="text" placeholder="留空则沿用默认参考图" />
+                    </label>
+                  </div>
+                  <p class="helper-text">
+                    用户没有上传参考图时，系统会自动回退到 `F:\AICODING\需求\电网人物形象.png`，再不行才会走 newsroom 预览帧或占位图。
+                  </p>
+                  <div class="inline-actions">
+                    <button id="apply-role-and-generate-current" class="action-button primary" type="button">用当前参考图出图</button>
+                    <button id="apply-role-and-generate-all" class="action-button" type="button">全部镜头重出图</button>
+                  </div>
+                </div>
+              </div>
             </section>
 
-            <section class="mini-card">
-              <h3>Provider 尝试日志</h3>
-              <div id="attempt-table"></div>
+            <section id="inspector-pane-voice" class="inspector-pane">
+              <div class="inspector-scroll">
+                <div class="editor-card">
+                  <div class="card-head">
+                    <div>
+                      <p class="section-kicker">Step 3</p>
+                      <h3>配音与成片</h3>
+                    </div>
+                  </div>
+                  <form id="form-render" class="field-grid">
+                    <label>
+                      音色
+                      <select name="preferred_voice">
+                        <option value="professional_cn_male">professional_cn_male</option>
+                        <option value="professional_cn_female">professional_cn_female</option>
+                        <option value="zh_male_m191_uranus_bigtts">云舟 2.0</option>
+                        <option value="zh_female_xiaohe_uranus_bigtts">小何 2.0</option>
+                      </select>
+                    </label>
+                    <label>
+                      渲染模式
+                      <select name="render_mode">
+                        <option value="video_audio">video_audio</option>
+                        <option value="image_audio">image_audio</option>
+                      </select>
+                    </label>
+                    <label>
+                      输出画幅
+                      <select name="aspect_ratio">
+                        <option value="9:16">9:16 竖屏</option>
+                        <option value="16:9">16:9 横屏</option>
+                      </select>
+                    </label>
+                    <label>
+                      发布模式
+                      <select name="publish_mode">
+                        <option value="draft">draft</option>
+                        <option value="direct">direct</option>
+                      </select>
+                    </label>
+                    <label class="field-span">
+                      最终渲染参考图
+                      <input name="reference_image_path" type="text" placeholder="不填则沿用上一步的默认参考图" />
+                    </label>
+                    <label class="checkbox-line field-span">
+                      <input name="reuse_existing_shot_images" type="checkbox" checked />
+                      最终渲染时优先复用第二步已经生成好的镜头图
+                    </label>
+                    <div class="field-span render-note">
+                      第三步只负责把镜头图、配音和字幕合成为成片，用户不再逐镜头介入视频生成本身。
+                    </div>
+                    <div class="field-span">
+                      <button id="render-button" class="full-width-button" type="submit">开始最终合成</button>
+                    </div>
+                  </form>
+                </div>
+              </div>
+            </section>
+
+            <section id="inspector-pane-music" class="inspector-pane">
+              <div class="inspector-scroll">
+                <div class="editor-card">
+                  <div class="card-head">
+                    <div>
+                      <p class="section-kicker">Music</p>
+                      <h3>背景音乐</h3>
+                    </div>
+                  </div>
+                  <div class="music-placeholder">
+                    <strong>当前版本默认不混入背景音乐</strong>
+                    <p>
+                      这版先优先保证电网新闻口播、分镜、图像和成片链路稳定。右侧保留这个面板，是为了后面接入
+                      BGM 混音时，操作习惯还能保持和剪映一致。
+                    </p>
+                    <div class="music-suggestions">
+                      <span class="music-chip">新闻口播建议：无 BGM</span>
+                      <span class="music-chip">企业宣发建议：轻科技氛围</span>
+                      <span class="music-chip">知识科普建议：低存在感电子垫乐</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            <section id="inspector-pane-output" class="inspector-pane">
+              <div class="inspector-scroll">
+                <div class="editor-card">
+                  <div class="card-head">
+                    <div>
+                      <p class="section-kicker">Outputs</p>
+                      <h3>产物与错误反馈</h3>
+                    </div>
+                  </div>
+                  <div id="artifact-links" class="artifact-links"></div>
+                </div>
+
+                <div class="editor-card">
+                  <div class="card-head">
+                    <div>
+                      <p class="section-kicker">Media</p>
+                      <h3>预览与成片</h3>
+                    </div>
+                  </div>
+                  <div id="media-gallery" class="media-gallery"></div>
+                </div>
+
+                <div class="editor-card">
+                  <div class="card-head">
+                    <div>
+                      <p class="section-kicker">Attempts</p>
+                      <h3>接口调用记录</h3>
+                    </div>
+                  </div>
+                  <div id="attempt-table" class="attempt-table-wrap"></div>
+                </div>
+              </div>
             </section>
           </div>
-        </section>
-      </main>
+        </aside>
+      </div>
     </div>
+
+    <div id="drawer-backdrop" class="drawer-backdrop hidden"></div>
+
+    <aside id="create-drawer" class="drawer hidden">
+      <div class="drawer-head">
+        <div>
+          <p class="section-kicker">Create</p>
+          <h2>新建项目</h2>
+        </div>
+        <button class="drawer-close" data-close-drawer="create" type="button">关闭</button>
+      </div>
+
+      <div class="drawer-tab-row">
+        <button class="drawer-tab active" data-source-pane="source-text" type="button">正文输入</button>
+        <button class="drawer-tab" data-source-pane="source-script" type="button">现成脚本</button>
+        <button class="drawer-tab" data-source-pane="source-url" type="button">网页链接</button>
+        <button class="drawer-tab" data-source-pane="source-feed" type="button">RPA Feed</button>
+      </div>
+
+      <div class="drawer-body">
+        <div class="source-pane active" id="source-text">
+          <form id="form-create-text" class="field-grid">
+            <label>
+              标题
+              <input name="title" type="text" placeholder="例如：国家电网一分钟科普" />
+            </label>
+            <label>
+              模式
+              <select name="mode">
+                <option value="news_mode">news_mode</option>
+                <option value="explain_mode">explain_mode</option>
+              </select>
+            </label>
+            <label>
+              时长（秒）
+              <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
+            </label>
+            <label>
+              画幅
+              <select name="aspect_ratio">
+                <option value="9:16">9:16 竖屏</option>
+                <option value="16:9">16:9 横屏</option>
+              </select>
+            </label>
+            <label class="field-span">
+              来源链接
+              <input name="source_url" type="text" placeholder="可选，用于记录来源" />
+            </label>
+            <label class="field-span">
+              正文
+              <textarea name="content_text" rows="8" placeholder="粘贴新闻正文、公众号内容或人工整理的资料" required></textarea>
+            </label>
+            <div class="field-span">
+              <button class="full-width-button" type="submit">生成项目草稿</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="source-pane" id="source-script">
+          <form id="form-create-script" class="field-grid">
+            <label>
+              标题
+              <input name="title" type="text" placeholder="例如：国家电网一分钟科普" required />
+            </label>
+            <label>
+              模式
+              <select name="mode">
+                <option value="explain_mode">explain_mode</option>
+                <option value="news_mode">news_mode</option>
+              </select>
+            </label>
+            <label>
+              时长（秒）
+              <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
+            </label>
+            <label>
+              画幅
+              <select name="aspect_ratio">
+                <option value="9:16">9:16 竖屏</option>
+                <option value="16:9">16:9 横屏</option>
+              </select>
+            </label>
+            <label class="field-span">
+              完整脚本
+              <textarea name="full_script" rows="8" placeholder="粘贴已整理好的口播脚本" required></textarea>
+            </label>
+            <div class="field-span">
+              <button class="full-width-button" type="submit">从脚本创建项目</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="source-pane" id="source-url">
+          <form id="form-create-url" class="field-grid">
+            <label class="field-span">
+              网页链接
+              <input name="source_url" type="text" placeholder="例如：https://www.sgcc.com.cn/..." required />
+            </label>
+            <label>
+              自定义标题
+              <input name="title" type="text" placeholder="可选，不填则自动提取" />
+            </label>
+            <label>
+              模式
+              <select name="mode">
+                <option value="news_mode">news_mode</option>
+                <option value="explain_mode">explain_mode</option>
+              </select>
+            </label>
+            <label>
+              时长（秒）
+              <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
+            </label>
+            <label>
+              画幅
+              <select name="aspect_ratio">
+                <option value="9:16">9:16 竖屏</option>
+                <option value="16:9">16:9 横屏</option>
+              </select>
+            </label>
+            <div class="field-span">
+              <button class="full-width-button" type="submit">抓取网页并建项目</button>
+            </div>
+          </form>
+        </div>
+
+        <div class="source-pane" id="source-feed">
+          <form id="form-create-feed" class="field-grid">
+            <label class="field-span">
+              Feed 路径
+              <input
+                name="feed_path"
+                type="text"
+                placeholder="例如：F:\AICODING\电网视频生成助手\data\input\rpa_raw_feed.json"
+                required
+              />
+            </label>
+            <label>
+              自定义标题
+              <input name="title" type="text" placeholder="可选，不填则自动选题" />
+            </label>
+            <label>
+              规划模式
+              <select name="plan_mode">
+                <option value="rule">rule</option>
+                <option value="auto">auto</option>
+                <option value="api">api</option>
+              </select>
+            </label>
+            <label>
+              时长（秒）
+              <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
+            </label>
+            <label>
+              画幅
+              <select name="aspect_ratio">
+                <option value="9:16">9:16 竖屏</option>
+                <option value="16:9">16:9 横屏</option>
+              </select>
+            </label>
+            <label class="checkbox-line field-span">
+              <input name="render_preview_bundle" type="checkbox" checked />
+              先生成 newsroom 预览包（封面 / GIF / MP4）
+            </label>
+            <div class="field-span">
+              <button class="full-width-button" type="submit">从 RPA Feed 建项目</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </aside>
+
+    <aside id="automation-drawer" class="drawer hidden">
+      <div class="drawer-head">
+        <div>
+          <p class="section-kicker">Automation</p>
+          <h2>自动抓站与定时任务</h2>
+        </div>
+        <button class="drawer-close" data-close-drawer="automation" type="button">关闭</button>
+      </div>
+
+      <div class="drawer-body">
+        <form id="form-create-automation" class="field-grid">
+          <label>
+            任务名称
+            <input name="name" type="text" placeholder="例如：电网晨报" required />
+          </label>
+          <label>
+            站点集合
+            <select name="source_set">
+              <option value="mixed">mixed</option>
+              <option value="official">official</option>
+            </select>
+          </label>
+          <label>
+            间隔（分钟）
+            <input name="interval_minutes" type="number" min="5" max="10080" value="240" />
+          </label>
+          <label>
+            规划模式
+            <select name="plan_mode">
+              <option value="rule">rule</option>
+              <option value="auto">auto</option>
+              <option value="api">api</option>
+            </select>
+          </label>
+          <label>
+            每站抓取上限
+            <input name="per_source_limit" type="number" min="1" max="10" value="3" />
+          </label>
+          <label>
+            总抓取上限
+            <input name="total_fetch_limit" type="number" min="1" max="20" value="8" />
+          </label>
+          <label>
+            模式
+            <select name="mode">
+              <option value="news_mode">news_mode</option>
+              <option value="explain_mode">explain_mode</option>
+            </select>
+          </label>
+          <label>
+            时长（秒）
+            <input name="target_duration_seconds" type="number" min="15" max="150" value="60" />
+          </label>
+          <label>
+            画幅
+            <select name="aspect_ratio">
+              <option value="9:16">9:16 竖屏</option>
+              <option value="16:9">16:9 横屏</option>
+            </select>
+          </label>
+          <label>
+            自动渲染模式
+            <select name="render_mode">
+              <option value="image_audio">image_audio</option>
+              <option value="video_audio">video_audio</option>
+            </select>
+          </label>
+          <label class="field-span">
+            参考人物图路径
+            <input name="reference_image_path" type="text" placeholder="不填则自动使用默认人物图" />
+          </label>
+          <label class="checkbox-line field-span">
+            <input name="auto_render" type="checkbox" checked />
+            抓取后自动渲染
+          </label>
+          <div class="field-span">
+            <button class="full-width-button" type="submit">创建自动任务</button>
+          </div>
+        </form>
+
+        <div class="automation-panel">
+          <div class="section-head compact">
+            <div>
+              <p class="section-kicker">Job List</p>
+              <h3>现有任务</h3>
+            </div>
+          </div>
+          <div id="automation-list" class="automation-list"></div>
+        </div>
+      </div>
+    </aside>
 
     <script src="/web/app.js" defer></script>
   </body>

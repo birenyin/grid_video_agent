@@ -174,6 +174,11 @@ class Database:
             ).fetchall()
         return [dict(row) for row in rows]
 
+    def clear_provider_attempts(self, project_id: str) -> None:
+        with self._connect() as conn:
+            conn.execute("DELETE FROM provider_attempts WHERE project_id = ?", (project_id,))
+            conn.commit()
+
     def save_automation_job(self, job: AutomationJobRecord) -> None:
         created_at = job.created_at
         updated_at = utc_now_iso()

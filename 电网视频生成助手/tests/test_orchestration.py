@@ -12,6 +12,8 @@ from app.models.project import (
     CreateProjectFromTextRequest,
     ProjectStatus,
     RenderProjectRequest,
+    WorkflowGenerateImagesRequest,
+    WorkflowScriptUpdateRequest,
 )
 from app.services.project_service import ProjectOrchestrator
 from tests.helpers import build_test_settings, workspace_tempdir
@@ -143,6 +145,53 @@ class OrchestrationTests(unittest.TestCase):
             self.assertGreater(len(rendered.artifacts.shot_images), 0)
             self.assertTrue(all(Path(item.image_path).exists() for item in rendered.artifacts.shot_images))
 
+    def test_workflow_script_update_can_save_manual_storyboard_edits(self) -> None:
+        with workspace_tempdir() as temp_dir:
+            settings = build_test_settings(Path(temp_dir))
+            orchestrator = ProjectOrchestrator(settings=settings, database=Database(settings.database_path))
+            project = orchestrator.create_from_script(
+                CreateProjectFromScriptRequest(
+                    title="工作流编辑测试",
+                    full_script=(
+                        "国家电网负责把电从电厂稳定送到家庭。"
+                        "调度中心持续监测负荷和频率。"
+                        "特高压负责跨区域大容量输电。"
+                        "配电网解决最后一公里问题。"
+                    ),
+                    mode="explain_mode",
+                    target_duration_seconds=20,
+                )
+            )
+
+            edited_storyboard = [
+                shot.model_copy(
+                    update={
+                        "narration_text": f"人工修改镜头 {shot.shot_id}",
+                        "subtitle_text": f"人工修改字幕 {shot.shot_id}",
+                    }
+                )
+                for shot in project.storyboard
+            ]
+            updated = orchestrator.update_workflow_script(
+                project.project_id,
+                WorkflowScriptUpdateRequest(
+                    title="工作流编辑测试（已修改）",
+                    full_script="人工改写后的完整口播稿，强调调度中心、特高压和配电网之间的协同关系。",
+                    summary="人工修改后的摘要",
+                    mode="explain_mode",
+                    target_duration_seconds=24,
+                    aspect_ratio="9:16",
+                    regenerate_storyboard=False,
+                    storyboard=edited_storyboard,
+                ),
+            )
+
+            self.assertEqual(updated.status, ProjectStatus.draft)
+            self.assertEqual(updated.summary.title, "工作流编辑测试（已修改）")  # type: ignore[union-attr]
+            self.assertEqual(updated.storyboard[0].narration_text, "人工修改镜头 1")
+            self.assertEqual(updated.storyboard[0].subtitle_text, "人工修改字幕 1")
+            self.assertEqual(updated.artifacts.shot_images, [])
+
     def test_rpa_project_falls_back_to_newsroom_preview_images_without_reference(self) -> None:
         with workspace_tempdir() as temp_dir:
             settings = build_test_settings(Path(temp_dir))
@@ -169,6 +218,53 @@ class OrchestrationTests(unittest.TestCase):
             self.assertEqual(rendered.status, ProjectStatus.rendered)
             self.assertEqual(rendered.artifacts.resolved_reference_image_path, "")
             self.assertTrue(any(item.provider_name == "newsroom_preview" for item in rendered.artifacts.shot_images))
+            self.assertTrue(Path(rendered.artifacts.composition.video_path).exists())  # type: ignore[union-attr]
+
+    def test_workflow_image_stage_and_render_stage_can_reuse_generated_images(self) -> None:
+        with workspace_tempdir() as temp_dir:
+            settings = build_test_settings(Path(temp_dir))
+            default_reference_image = Path(temp_dir) / "workflow_default_reference.png"
+            Image.new("RGB", (1280, 720), "#395F8C").save(default_reference_image)
+            settings.default_reference_image_path = str(default_reference_image)
+            orchestrator = ProjectOrchestrator(settings=settings, database=Database(settings.database_path))
+            project = orchestrator.create_from_script(
+                CreateProjectFromScriptRequest(
+                    title="工作流镜头图复用测试",
+                    full_script=(
+                        "国家电网负责把电能稳定送到城市和家庭。"
+                        "调度中心像大脑一样协调整个系统。"
+                        "特高压负责远距离大容量输电。"
+                        "配电网负责把电精准送到用户身边。"
+                    ),
+                    mode="explain_mode",
+                    target_duration_seconds=18,
+                    aspect_ratio="16:9",
+                )
+            )
+
+            staged = orchestrator.generate_workflow_images(
+                project.project_id,
+                WorkflowGenerateImagesRequest(
+                    aspect_ratio="16:9",
+                    reference_image_path=None,
+                ),
+            )
+            image_paths_before_render = {item.shot_id: item.image_path for item in staged.artifacts.shot_images}
+            rendered = orchestrator.render_workflow_project(
+                project.project_id,
+                RenderProjectRequest(
+                    render_mode="image_audio",
+                    aspect_ratio="16:9",
+                    reuse_existing_shot_images=True,
+                ),
+            )
+
+            self.assertEqual(rendered.status, ProjectStatus.rendered)
+            self.assertGreater(len(rendered.artifacts.shot_images), 0)
+            self.assertEqual(
+                {item.shot_id: item.image_path for item in rendered.artifacts.shot_images},
+                image_paths_before_render,
+            )
             self.assertTrue(Path(rendered.artifacts.composition.video_path).exists())  # type: ignore[union-attr]
 
     def test_project_can_render_stage_two_video_with_reference_image(self) -> None:
