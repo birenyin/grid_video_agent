@@ -1,0 +1,19 @@
+{
+  "total_items": 4,
+  "selected_items": 2,
+  "dropped_items": 2,
+  "duplicate_items": 1,
+  "risky_items": 1,
+  "output_files": [
+    "data\\output_script_aicoding\\video_plan.json",
+    "data\\output_script_aicoding\\video_script.md",
+    "data\\output_script_aicoding\\subtitles.srt",
+    "data\\output_script_aicoding\\selected_sources.md",
+    "data\\output_script_aicoding\\run_report.json"
+  ],
+  "input_mode": "file",
+  "source_count": 3,
+  "warnings": [
+    "网传某地大面积停电 来源可靠性较低或包含敏感表述，建议人工复核。"
+  ]
+}

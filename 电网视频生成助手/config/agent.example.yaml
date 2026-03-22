@@ -1,0 +1,15 @@
+brand_name: 电网调度速递
+audience: 电网调度、运维、交易、电力市场从业者
+style:
+  tone: 专业、口语化、信息密度高
+  duration_seconds: 60
+  opening_pattern: 先讲结论，再讲影响
+  compliance_rule: 不夸大、不猜测、不引用未经证实的数据
+selection:
+  preferred_tags:
+    - 调度
+    - 保供
+    - 负荷
+    - 新能源消纳
+    - 电力市场
+  min_hotness_score: 60

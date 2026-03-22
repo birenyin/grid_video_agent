@@ -1,0 +1,17 @@
+{
+  "total_items": 6,
+  "selected_items": 2,
+  "dropped_items": 0,
+  "duplicate_items": 0,
+  "risky_items": 0,
+  "output_files": [
+    "data\\output_web\\video_plan.json",
+    "data\\output_web\\video_script.md",
+    "data\\output_web\\subtitles.srt",
+    "data\\output_web\\selected_sources.md",
+    "data\\output_web\\run_report.json"
+  ],
+  "input_mode": "web",
+  "source_count": 3,
+  "warnings": []
+}

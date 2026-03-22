@@ -1,0 +1,13 @@
+{
+  "total_items": 4,
+  "selected_items": 2,
+  "dropped_items": 2,
+  "duplicate_items": 1,
+  "risky_items": 1,
+  "output_files": [
+    "data\\output_rpa\\video_plan.json",
+    "data\\output_rpa\\video_script.md",
+    "data\\output_rpa\\subtitles.srt",
+    "data\\output_rpa\\run_report.json"
+  ]
+}

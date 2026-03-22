@@ -1,0 +1,7 @@
+.env
+.env.*
+!.env.example
+.tmp_test/
+runtime/
+__pycache__/
+*.pyc
