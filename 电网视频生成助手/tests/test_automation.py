@@ -11,7 +11,7 @@ from fastapi.testclient import TestClient
 from app.api.deps import get_automation_service, get_orchestrator
 from app.core.database import Database
 from app.main import create_app
-from app.models.automation import AutomationJobStatus, CreateAutomationJobRequest
+from app.models.automation import AutomationJobStatus, CreateAutomationJobRequest, CreateAutomationProjectRequest
 from app.models.project import ProjectStatus
 from app.services.automation_service import AutomationService
 from app.services.project_service import ProjectOrchestrator
@@ -109,6 +109,44 @@ class AutomationServiceTests(unittest.TestCase):
             self.assertEqual(updated_job.last_project_id, run.project_id)
             self.assertEqual(updated_job.last_run_status, "success")
             self.assertEqual(len(service.list_runs(job.job_id)), 1)
+            self.assertEqual(run.new_item_count, 2)
+            self.assertEqual(len(run.candidates), 2)
+            self.assertTrue(Path(run.feed_path).exists())
+
+    def test_automation_job_can_create_project_from_selected_candidates(self) -> None:
+        with workspace_tempdir() as temp_dir:
+            settings = build_test_settings(Path(temp_dir))
+            database = Database(settings.database_path)
+            orchestrator = ProjectOrchestrator(settings=settings, database=database)
+            service = AutomationService(settings=settings, database=database, orchestrator=orchestrator)
+
+            job = service.create_job(
+                CreateAutomationJobRequest(
+                    name="候选资料池任务",
+                    interval_minutes=30,
+                    auto_render=False,
+                    render_mode="image_audio",
+                    aspect_ratio="16:9",
+                )
+            )
+
+            with patch("app.services.automation_service.fetch_latest_grid_items", side_effect=fake_fetch_latest_grid_items):
+                run = service.run_job_now(job.job_id)
+
+            self.assertIsNotNone(run.project_id)
+            created = service.create_project_from_run(
+                job.job_id,
+                CreateAutomationProjectRequest(
+                    run_id=run.run_id,
+                    selected_item_keys=["a2"],
+                    auto_render=False,
+                ),
+            )
+
+            self.assertEqual(created.status, ProjectStatus.draft)
+            self.assertEqual(created.content_input.source_type, "rpa_feed")
+            self.assertIn("源网荷储协同", created.script.full_script)  # type: ignore[union-attr]
+            self.assertTrue(Path(created.artifacts.news_plan_path).exists())
 
     def test_queue_due_jobs_only_schedules_active_due_jobs(self) -> None:
         with workspace_tempdir() as temp_dir:
@@ -180,6 +218,19 @@ class AutomationRouteTests(unittest.TestCase):
             self.assertEqual(detail_response.status_code, 200)
             self.assertEqual(detail_response.json()["job"]["job_id"], job_id)
             self.assertEqual(len(detail_response.json()["runs"]), 1)
+            self.assertGreaterEqual(detail_response.json()["runs"][0]["new_item_count"], 1)
+            self.assertEqual(len(detail_response.json()["runs"][0]["candidates"]), 2)
+
+            create_project_response = client.post(
+                f"/automation/jobs/{job_id}/projects",
+                json={
+                    "run_id": detail_response.json()["runs"][0]["run_id"],
+                    "selected_item_keys": ["a1"],
+                    "auto_render": False,
+                },
+            )
+            self.assertEqual(create_project_response.status_code, 200)
+            self.assertEqual(create_project_response.json()["status"], "draft")
 
             pause_response = client.post(f"/automation/jobs/{job_id}/status", json={"status": "paused"})
             self.assertEqual(pause_response.status_code, 200)

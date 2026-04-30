@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import uuid
 from pathlib import Path
 from typing import Callable, TypeVar
@@ -30,6 +31,7 @@ from app.models.project import (
     ProjectStatus,
     RenderProjectRequest,
     WorkflowGenerateImagesRequest,
+    WorkflowGenerateVideosRequest,
     WorkflowScriptUpdateRequest,
 )
 from app.providers.base import (
@@ -192,11 +194,12 @@ class ProjectOrchestrator:
 
         project_id, working_dir = self._create_project_workspace()
         newsroom_dir = ensure_dir(working_dir / "newsroom")
+        pipeline_feed_path = self._prepare_pipeline_feed(feed_path, request.selected_item_keys, newsroom_dir)
         config = AgentConfig(
             duration_seconds=request.target_duration_seconds,
             model_mode=request.plan_mode,
         )
-        plan, _ = run_pipeline(feed_path, newsroom_dir, config)
+        plan, _ = run_pipeline(pipeline_feed_path, newsroom_dir, config)
 
         if request.render_preview_bundle:
             preview_width, preview_height = self._preview_canvas_size(request.aspect_ratio)
@@ -409,6 +412,118 @@ class ProjectOrchestrator:
         self.database.save_project(project)
         return project
 
+    def generate_workflow_videos(self, project_id: str, request: WorkflowGenerateVideosRequest) -> ProjectRecord:
+        project = self.get_project_or_raise(project_id)
+        if not project.storyboard:
+            raise ValueError("Project has no storyboard to generate videos from.")
+
+        aspect_ratio = request.aspect_ratio or project.content_input.aspect_ratio
+        storyboard = [
+            shot if shot.aspect_ratio == aspect_ratio else shot.model_copy(update={"aspect_ratio": aspect_ratio})
+            for shot in project.storyboard
+        ]
+        working_dir = ensure_dir(Path(project.artifacts.working_dir))
+        images_dir = ensure_dir(working_dir / "images")
+        shots_dir = ensure_dir(working_dir / "shots")
+        selected_shot_ids = set(request.shot_ids) if request.shot_ids else {shot.shot_id for shot in storyboard}
+        existing_images = self._collect_existing_shot_images(project, storyboard)
+        existing_videos = self._collect_existing_shot_videos(project, storyboard)
+        generated_images_map: dict[int, ImageGenerationResult] = dict(existing_images)
+        shot_reference_paths = dict(project.artifacts.shot_reference_paths)
+        resolved_default_reference = self._resolve_reference_image_path(request.reference_image_path)
+        if resolved_default_reference:
+            project.artifacts.resolved_reference_image_path = resolved_default_reference
+
+        for shot_key, raw_value in request.shot_reference_overrides.items():
+            cleaned = raw_value.strip()
+            if not cleaned:
+                shot_reference_paths.pop(str(shot_key), None)
+                continue
+            shot_reference_paths[str(shot_key)] = self._require_existing_local_path(cleaned)
+
+        generated_videos: list[VideoGenerationResult] = []
+        preview_fallback_used = False
+        placeholder_fallback_used = False
+        static_fallback_used = False
+
+        for shot in storyboard:
+            current_video = existing_videos.get(shot.shot_id)
+            if shot.shot_id not in selected_shot_ids:
+                if current_video is not None:
+                    generated_videos.append(current_video)
+                continue
+
+            current_image = generated_images_map.get(shot.shot_id)
+            should_prepare_image = request.video_generation_mode in {"image_to_video", "static_image"} and (
+                current_image is None or not Path(current_image.image_path).exists() or not request.reuse_existing_shot_images
+            )
+            if should_prepare_image:
+                shot_reference = shot_reference_paths.get(
+                    str(shot.shot_id),
+                    project.artifacts.resolved_reference_image_path or resolved_default_reference or "",
+                )
+                if shot_reference:
+                    current_image = self._generate_reference_image_for_shot(
+                        project_id=project.project_id,
+                        shot=shot,
+                        images_dir=images_dir,
+                        reference_image_path=shot_reference,
+                    )
+                else:
+                    preview_result = self._load_newsroom_preview_images(project, [shot])
+                    if preview_result:
+                        preview_fallback_used = True
+                        self.database.log_provider_attempt(
+                            project_id=project.project_id,
+                            provider_name="newsroom_preview",
+                            action_name=f"generate_reference_image_{shot.shot_id}",
+                            attempt_no=1,
+                            status="success",
+                            request_payload={"shot_id": shot.shot_id, "aspect_ratio": shot.aspect_ratio},
+                            response_payload=preview_result[0].model_dump(),
+                        )
+                        current_image = preview_result[0]
+                    else:
+                        placeholder_fallback_used = True
+                        current_image = self._generate_placeholder_image_for_shot(
+                            project_id=project.project_id,
+                            shot=shot,
+                            images_dir=images_dir,
+                        )
+                generated_images_map[shot.shot_id] = current_image
+
+            shot_dir = ensure_dir(shots_dir / f"shot_{shot.shot_id:02d}")
+            if request.video_generation_mode == "text_to_video":
+                video_result = self._render_video_shot_from_text(project.project_id, shot, shot_dir)
+            elif request.video_generation_mode == "static_image":
+                video_result = self._render_static_image_shot(project.project_id, shot, shot_dir, current_image)
+                static_fallback_used = True
+            else:
+                if current_image is not None and Path(current_image.image_path).exists():
+                    video_result = self._render_video_shot_from_image(project.project_id, shot, shot_dir, current_image)
+                else:
+                    video_result = self._render_video_shot_from_text(project.project_id, shot, shot_dir)
+            generated_videos.append(video_result)
+
+        project.storyboard = storyboard
+        project.status = ProjectStatus.draft
+        project.artifacts.shot_reference_paths = shot_reference_paths
+        project.artifacts.shot_images = sorted(generated_images_map.values(), key=lambda item: item.shot_id)
+        self._reset_render_outputs(project, clear_images=False)
+        project.artifacts.shot_videos = sorted(generated_videos, key=lambda item: item.shot_id)
+        project.artifacts.shot_images = self._attach_generated_videos_to_images(
+            project.artifacts.shot_images,
+            project.artifacts.shot_videos,
+        )
+        if preview_fallback_used:
+            self._append_project_warning(project, "部分镜头转视频前缺少参考图，已回退为 newsroom 预览帧。")
+        if placeholder_fallback_used:
+            self._append_project_warning(project, "部分镜头转视频前缺少参考图，已自动补占位图片。")
+        if static_fallback_used:
+            self._append_project_warning(project, "当前视频步骤使用了静态图视频模式，可直接用于最终合成。")
+        self.database.save_project(project)
+        return project
+
     def render_workflow_project(self, project_id: str, request: RenderProjectRequest | None = None) -> ProjectRecord:
         project = self.get_project_or_raise(project_id)
         if project.summary is None or project.script is None or not project.storyboard:
@@ -444,12 +559,14 @@ class ProjectOrchestrator:
                 reference_image_path=resolved_reference_image_path,
                 reuse_existing_shot_images=request.reuse_existing_shot_images,
             )
-            shot_videos = self._generate_shot_videos(
+            shot_videos = self._prepare_shot_videos_for_render(
+                project=project,
                 project_id=project_id,
-                shots=storyboard,
+                storyboard=storyboard,
                 shots_dir=shots_dir,
                 render_mode=request.render_mode,
                 shot_images=shot_images,
+                reuse_existing_shot_videos=request.reuse_existing_shot_videos,
             )
             shot_images = self._attach_generated_videos_to_images(shot_images, shot_videos)
             if any(item.provider_name in {"mock_video", "static_image_video"} or item.used_fallback for item in shot_videos):
@@ -528,12 +645,14 @@ class ProjectOrchestrator:
                 if shot_images:
                     self._append_project_warning(project, "未生成镜头图片，已回退为 newsroom 预览帧。")
 
-            shot_videos = self._generate_shot_videos(
+            shot_videos = self._prepare_shot_videos_for_render(
+                project=project,
                 project_id=project_id,
-                shots=storyboard,
+                storyboard=storyboard,
                 shots_dir=shots_dir,
                 render_mode=request.render_mode,
                 shot_images=shot_images,
+                reuse_existing_shot_videos=request.reuse_existing_shot_videos,
             )
             shot_images = self._attach_generated_videos_to_images(shot_images, shot_videos)
             if any(item.provider_name in {"mock_video", "static_image_video"} or item.used_fallback for item in shot_videos):
@@ -674,6 +793,29 @@ class ProjectOrchestrator:
         shot_images: list[ImageGenerationResult] | None = None,
     ) -> list[VideoGenerationResult]:
         return self._generate_shot_videos_with_mode(project_id, shots, shots_dir, render_mode, shot_images)
+
+    def _prepare_shot_videos_for_render(
+        self,
+        project: ProjectRecord,
+        project_id: str,
+        storyboard: list[StoryboardShot],
+        shots_dir: Path,
+        render_mode: str,
+        shot_images: list[ImageGenerationResult] | None,
+        reuse_existing_shot_videos: bool,
+    ) -> list[VideoGenerationResult]:
+        if render_mode == "video_audio" and reuse_existing_shot_videos:
+            existing_videos = self._collect_existing_shot_videos(project, storyboard)
+            if len(existing_videos) == len(storyboard):
+                return [existing_videos[shot.shot_id] for shot in storyboard]
+
+        return self._generate_shot_videos(
+            project_id=project_id,
+            shots=storyboard,
+            shots_dir=shots_dir,
+            render_mode=render_mode,
+            shot_images=shot_images,
+        )
 
     def _generate_shot_images(
         self,
@@ -921,6 +1063,18 @@ class ProjectOrchestrator:
                 existing[item.shot_id] = item
         return existing
 
+    def _collect_existing_shot_videos(
+        self,
+        project: ProjectRecord,
+        storyboard: list[StoryboardShot],
+    ) -> dict[int, VideoGenerationResult]:
+        valid_ids = {shot.shot_id for shot in storyboard}
+        existing: dict[int, VideoGenerationResult] = {}
+        for item in project.artifacts.shot_videos:
+            if item.shot_id in valid_ids and Path(item.video_path).exists() and Path(item.poster_path).exists():
+                existing[item.shot_id] = item
+        return existing
+
     def _generate_placeholder_image_for_shot(
         self,
         project_id: str,
@@ -1112,6 +1266,51 @@ class ProjectOrchestrator:
         if not candidate.exists():
             raise ValueError(f"Reference image not found: {candidate}")
         return str(candidate)
+
+    def _prepare_pipeline_feed(self, feed_path: Path, selected_item_keys: list[str], output_dir: Path) -> Path:
+        chosen_keys = {str(item).strip() for item in selected_item_keys if str(item).strip()}
+        if not chosen_keys:
+            return feed_path
+
+        payload = json.loads(feed_path.read_text(encoding="utf-8"))
+        if isinstance(payload, list):
+            records = [item for item in payload if isinstance(item, dict)]
+        elif isinstance(payload, dict):
+            records = [item for item in payload.get("items", []) if isinstance(item, dict)]
+        else:
+            raise ValueError(f"Unsupported RPA feed payload: {feed_path}")
+
+        selected_records = [item for item in records if self._build_feed_item_key(item) in chosen_keys]
+        if not selected_records:
+            raise ValueError("Selected feed items were not found in the RPA feed.")
+
+        if isinstance(payload, list):
+            filtered_payload: dict | list = selected_records
+        else:
+            filtered_payload = dict(payload)
+            filtered_payload["items"] = selected_records
+
+        selected_feed_path = output_dir / "selected_feed.json"
+        selected_feed_path.write_text(
+            json.dumps(filtered_payload, ensure_ascii=False, indent=2),
+            encoding="utf-8",
+        )
+        return selected_feed_path
+
+    def _build_feed_item_key(self, record: dict) -> str:
+        direct_key = str(record.get("dedupe_key", "")).strip()
+        if direct_key:
+            return direct_key
+
+        url = str(record.get("url", "")).strip()
+        if url:
+            return f"url:{url}"
+
+        source = str(record.get("source", "")).strip()
+        title = str(record.get("title", "")).strip()
+        summary = str(record.get("summary") or record.get("content") or "").strip()
+        seed = f"{source}|{title}|{summary[:80]}"
+        return hashlib.md5(seed.encode("utf-8")).hexdigest()
 
     def _compose_feed_script(self, intro_hook: str, segment_narrations: list[str], takeaway: str) -> str:
         sections: list[str] = []

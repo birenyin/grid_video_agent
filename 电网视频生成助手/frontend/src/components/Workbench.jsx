@@ -19,9 +19,15 @@ export function Workbench({
     <main className="studio-workbench">
       <section className="glass-card workbench-shell">
         <div className="workbench-topbar">
-          <div>
+          <div className="workbench-title-block">
             <div className="section-label">Workspace</div>
-            <h1>{projectDetail ? projectDetail.project.summary?.title || projectDetail.project.content_input.title || projectDetail.project.project_id : "请选择项目"}</h1>
+            <h1>
+              {projectDetail
+                ? projectDetail.project.summary?.title ||
+                  projectDetail.project.content_input.title ||
+                  projectDetail.project.project_id
+                : "请选择项目"}
+            </h1>
             {projectDetail ? (
               <div className="meta-chip-row roomy">
                 <span className="soft-chip">{projectDetail.project.status}</span>
@@ -53,11 +59,19 @@ export function Workbench({
               </button>
               <button
                 type="button"
+                className={`pill-button ${workflowStep === "videos" ? "active" : ""}`}
+                disabled={!projectDetail || busy}
+                onClick={() => onWorkflowStepChange("videos")}
+              >
+                3. 图片生成视频
+              </button>
+              <button
+                type="button"
                 className={`pill-button ${workflowStep === "render" ? "active" : ""}`}
                 disabled={!projectDetail || busy}
                 onClick={() => onWorkflowStepChange("render")}
               >
-                3. 最终成片
+                4. 最终成片
               </button>
             </div>
 
@@ -75,7 +89,7 @@ export function Workbench({
                   <div className="section-label">Timeline</div>
                   <h2>镜头列表</h2>
                 </div>
-                <div className="small-copy">可逐镜头修改文案和画面</div>
+                <div className="small-copy">这里支持逐镜头切换与编辑</div>
               </div>
 
               <div className="timeline-scroll">
@@ -148,28 +162,27 @@ export function Workbench({
                 )}
               </div>
 
-              <div className="stage-caption">
-                <div>
+              <div className="stage-footer">
+                <div className="stage-caption">
                   <strong>{preview.title}</strong>
                   <p>{preview.subtitle}</p>
                 </div>
-              </div>
-
-              <div className="diagnostic-grid">
-                {diagnostics.map((item) => (
-                  <article key={`${item.label}-${item.headline}`} className={`diagnostic-tile ${item.tone}`}>
-                    <span className="section-label">{item.label}</span>
-                    <strong>{item.headline}</strong>
-                    <p>{item.body}</p>
-                  </article>
-                ))}
+                <div className="diagnostic-grid">
+                  {diagnostics.map((item) => (
+                    <article key={`${item.label}-${item.headline}`} className={`diagnostic-tile ${item.tone}`}>
+                      <span className="section-label">{item.label}</span>
+                      <strong>{item.headline}</strong>
+                      <p>{item.body}</p>
+                    </article>
+                  ))}
+                </div>
               </div>
             </section>
           </div>
         ) : (
           <EmptyState
             title="先从左侧选一个项目"
-            body="新的 React 工作台已经接上分步流程，选中项目后就能像剪映一样逐镜头修改。"
+            body="项目选中后，中间区域会出现可滚动镜头时间线和居中的预览舞台。"
           />
         )}
       </section>

@@ -246,6 +246,16 @@ class Database:
             )
             conn.commit()
 
+    def get_automation_run(self, run_id: str) -> AutomationRunRecord | None:
+        with self._connect() as conn:
+            row = conn.execute(
+                "SELECT payload_json FROM automation_runs WHERE run_id = ?",
+                (run_id,),
+            ).fetchone()
+        if row is None:
+            return None
+        return AutomationRunRecord.model_validate_json(row["payload_json"])
+
     def list_automation_runs(self, job_id: str, limit: int = 30) -> list[AutomationRunRecord]:
         with self._connect() as conn:
             rows = conn.execute(

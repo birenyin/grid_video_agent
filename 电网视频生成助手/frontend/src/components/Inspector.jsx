@@ -65,6 +65,8 @@ export function Inspector({
   onRegenerateStoryboard,
   onGenerateCurrent,
   onGenerateAll,
+  onGenerateCurrentVideo,
+  onGenerateAllVideos,
   onRenderFieldChange,
   onRender,
 }) {

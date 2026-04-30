@@ -37,6 +37,7 @@ export const CREATE_FORM_DEFAULTS = {
 export const AUTOMATION_FORM_DEFAULTS = {
   name: "",
   source_set: "mixed",
+  focus_topics: [],
   interval_minutes: 240,
   plan_mode: "rule",
   per_source_limit: 3,
@@ -55,14 +56,17 @@ export const RENDER_FORM_DEFAULTS = {
   preferred_voice: "professional_cn_male",
   publish_mode: "draft",
   render_mode: "video_audio",
+  video_generation_mode: "image_to_video",
   aspect_ratio: "9:16",
   reference_image_path: "",
   reuse_existing_shot_images: true,
+  reuse_existing_shot_videos: true,
 };
 
 export const INSPECTOR_TABS = [
   { key: "script", label: "文案" },
   { key: "visual", label: "画面" },
+  { key: "video", label: "转视频" },
   { key: "role", label: "角色" },
   { key: "voice", label: "配音" },
   { key: "music", label: "音乐" },

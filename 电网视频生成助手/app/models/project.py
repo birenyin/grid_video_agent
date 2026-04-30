@@ -98,6 +98,7 @@ class CreateProjectFromFeedRequest(BaseModel):
     aspect_ratio: str = Field(default="9:16", pattern="^(9:16|16:9)$")
     plan_mode: str = Field(default="rule", pattern="^(rule|auto|api)$")
     render_preview_bundle: bool = True
+    selected_item_keys: list[str] = Field(default_factory=list)
 
 
 class CreateProjectResponse(BaseModel):
@@ -118,6 +119,7 @@ class RenderProjectRequest(BaseModel):
     aspect_ratio: str | None = Field(default=None, pattern="^(9:16|16:9)$")
     reference_image_path: str | None = None
     reuse_existing_shot_images: bool = True
+    reuse_existing_shot_videos: bool = True
 
 
 class RenderProjectResponse(BaseModel):
@@ -192,3 +194,12 @@ class WorkflowGenerateImagesRequest(BaseModel):
     reference_image_path: str | None = None
     shot_reference_overrides: dict[str, str] = Field(default_factory=dict)
     shot_ids: list[int] = Field(default_factory=list)
+
+
+class WorkflowGenerateVideosRequest(BaseModel):
+    aspect_ratio: str | None = Field(default=None, pattern="^(9:16|16:9)$")
+    video_generation_mode: str = Field(default="image_to_video", pattern="^(image_to_video|text_to_video|static_image)$")
+    reference_image_path: str | None = None
+    shot_reference_overrides: dict[str, str] = Field(default_factory=dict)
+    shot_ids: list[int] = Field(default_factory=list)
+    reuse_existing_shot_images: bool = True

@@ -22,6 +22,7 @@ from app.models.project import (
     RenderProjectRequest,
     RenderProjectResponse,
     WorkflowGenerateImagesRequest,
+    WorkflowGenerateVideosRequest,
     WorkflowScriptUpdateRequest,
 )
 from app.services.project_service import ProjectOrchestrator
@@ -129,6 +130,20 @@ def generate_workflow_images(
 ) -> ProjectDetailResponse:
     try:
         project = orchestrator.generate_workflow_images(project_id, request)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+    attempts = orchestrator.database.list_provider_attempts(project.project_id)
+    return build_project_detail_response(project, attempts, orchestrator.settings)
+
+
+@router.post("/{project_id}/workflow/videos", response_model=ProjectDetailResponse)
+def generate_workflow_videos(
+    project_id: str,
+    request: WorkflowGenerateVideosRequest,
+    orchestrator: ProjectOrchestrator = Depends(get_orchestrator),
+) -> ProjectDetailResponse:
+    try:
+        project = orchestrator.generate_workflow_videos(project_id, request)
     except ValueError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
     attempts = orchestrator.database.list_provider_attempts(project.project_id)

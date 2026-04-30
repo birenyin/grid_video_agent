@@ -21,8 +21,11 @@ import {
 const WORKFLOW_TAB_MAP = {
   script: "script",
   images: "visual",
+  videos: "video",
   render: "voice",
 };
+
+const AUTO_REFRESH_INTERVAL_MS = 12000;
 
 const SIDEBAR_STORAGE_KEY = "grid-video-studio.sidebar-collapsed";
 
@@ -74,6 +77,7 @@ export default function App() {
   const [status, setStatus] = useState({ tone: "info", message: "React 工作台已就绪" });
   const [projectList, setProjectList] = useState([]);
   const [automationJobs, setAutomationJobs] = useState([]);
+  const [automationJobDetails, setAutomationJobDetails] = useState({});
   const [projectDetail, setProjectDetail] = useState(null);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [selectedShotId, setSelectedShotId] = useState(null);
@@ -126,6 +130,22 @@ export default function App() {
     void refreshAll();
   }, []);
 
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const hasActiveAutomation = automationJobs.some((job) => job.status === "active");
+      const shouldRefreshSelectedDetail = projectDetail?.project?.status === "rendering";
+      if (!hasActiveAutomation && !shouldRefreshSelectedDetail) {
+        return;
+      }
+      void refreshCollections({
+        silent: true,
+        refreshSelectedDetail: shouldRefreshSelectedDetail,
+      });
+    }, AUTO_REFRESH_INTERVAL_MS);
+
+    return () => window.clearInterval(timer);
+  }, [automationJobs, projectDetail?.project?.status, selectedProjectId, selectedShotId]);
+
   function setBusyState(nextBusy, message = null, tone = "info") {
     setBusy(nextBusy);
     if (message) {
@@ -149,8 +169,39 @@ export default function App() {
     });
   }
 
-  async function refreshAll(preferredProjectId = null) {
-    setBusyState(true, "正在刷新项目和自动任务...");
+  async function refreshAutomationDetails(jobs) {
+    const nextJobs = Array.isArray(jobs) ? jobs : [];
+    if (!nextJobs.length) {
+      startTransition(() => setAutomationJobDetails({}));
+      return;
+    }
+
+    const results = await Promise.allSettled(
+      nextJobs.map((job) => fetchJSON(`/automation/jobs/${job.job_id}`)),
+    );
+
+    const detailMap = {};
+    nextJobs.forEach((job, index) => {
+      const result = results[index];
+      if (result.status === "fulfilled") {
+        detailMap[job.job_id] = result.value;
+      } else {
+        detailMap[job.job_id] = { job, runs: [] };
+      }
+    });
+
+    startTransition(() => setAutomationJobDetails(detailMap));
+  }
+
+  async function refreshCollections({
+    preferredProjectId = null,
+    silent = false,
+    refreshSelectedDetail = true,
+  } = {}) {
+    if (!silent) {
+      setBusyState(true, "正在刷新项目和自动任务...");
+    }
+
     try {
       const [projects, jobs] = await Promise.all([
         fetchJSON("/projects?limit=50"),
@@ -162,11 +213,23 @@ export default function App() {
         setAutomationJobs(jobs);
       });
 
+      await refreshAutomationDetails(jobs);
+
       const targetId = preferredProjectId || selectedProjectId || projects[0]?.project_id || null;
-      if (targetId) {
+      const shouldLoadDetail =
+        Boolean(targetId) &&
+        refreshSelectedDetail &&
+        (
+          Boolean(preferredProjectId) ||
+          !projectDetail ||
+          projectDetail.project.project_id !== targetId ||
+          projectDetail.project.status === "rendering"
+        );
+
+      if (shouldLoadDetail) {
         const detail = await fetchJSON(`/projects/${targetId}`);
         applyLoadedDetail(detail, selectedShotId);
-      } else {
+      } else if (!targetId && refreshSelectedDetail) {
         startTransition(() => {
           setProjectDetail(null);
           setSelectedProjectId(null);
@@ -175,12 +238,25 @@ export default function App() {
         });
       }
 
-      setStatus({ tone: "success", message: "列表已刷新" });
+      if (!silent) {
+        setStatus({ tone: "success", message: "列表已刷新" });
+      }
     } catch (error) {
-      setStatus({ tone: "danger", message: error.message });
+      if (!silent) {
+        setStatus({ tone: "danger", message: error.message });
+      }
     } finally {
-      setBusy(false);
+      if (!silent) {
+        setBusy(false);
+      }
     }
+  }
+
+  async function refreshAll(preferredProjectId = null) {
+    await refreshCollections({
+      preferredProjectId,
+      refreshSelectedDetail: true,
+    });
   }
 
   async function loadProject(projectId, preferredShotId = null) {
@@ -308,6 +384,23 @@ export default function App() {
     };
   }
 
+  function collectVideoPayload(shotIds = []) {
+    const project = projectDetail?.project;
+    if (!project) return null;
+
+    return {
+      aspect_ratio: project.content_input.aspect_ratio,
+      video_generation_mode: renderForm.video_generation_mode,
+      reference_image_path:
+        project.artifacts.resolved_reference_image_path ||
+        renderForm.reference_image_path ||
+        DEFAULT_REFERENCE_HINT,
+      shot_reference_overrides: project.artifacts.shot_reference_paths || {},
+      shot_ids: shotIds,
+      reuse_existing_shot_images: renderForm.reuse_existing_shot_images,
+    };
+  }
+
   function collectRenderPayload() {
     return {
       preferred_voice: renderForm.preferred_voice,
@@ -319,6 +412,7 @@ export default function App() {
         projectDetail?.project?.artifacts?.resolved_reference_image_path ||
         DEFAULT_REFERENCE_HINT,
       reuse_existing_shot_images: renderForm.reuse_existing_shot_images,
+      reuse_existing_shot_videos: renderForm.reuse_existing_shot_videos,
     };
   }
 
@@ -381,6 +475,41 @@ export default function App() {
     }
   }
 
+  async function handleGenerateVideos(shotIds = []) {
+    if (!selectedProjectId) {
+      setStatus({ tone: "danger", message: "请先选择一个项目" });
+      return;
+    }
+
+    const payload = collectVideoPayload(shotIds);
+    if (!payload) return;
+
+    setBusyState(
+      true,
+      shotIds.length
+        ? `正在生成镜头 ${shotIds.join(", ")} 的视频...`
+        : "正在批量生成镜头视频...",
+    );
+    try {
+      const detail = await fetchJSON(`/projects/${selectedProjectId}/workflow/videos`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      applyLoadedDetail(detail, selectedShotId);
+      setWorkflowStep("videos");
+      setInspectorTab("video");
+      setPreviewMode("shot");
+      setStatus({
+        tone: "success",
+        message: shotIds.length ? "当前镜头视频已更新" : "镜头视频已批量生成",
+      });
+    } catch (error) {
+      setStatus({ tone: "danger", message: error.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function handleRender() {
     if (!selectedProjectId) {
       setStatus({ tone: "danger", message: "请先选择一个项目" });
@@ -431,6 +560,14 @@ export default function App() {
         }),
       });
       applyLoadedDetail(imageDetail, selectedShotId);
+
+      if (renderForm.render_mode === "video_audio") {
+        const videoDetail = await fetchJSON(`/projects/${selectedProjectId}/workflow/videos`, {
+          method: "POST",
+          body: JSON.stringify(collectVideoPayload([])),
+        });
+        applyLoadedDetail(videoDetail, selectedShotId);
+      }
 
       const renderResponse = await fetchJSON(`/projects/${selectedProjectId}/workflow/render`, {
         method: "POST",
@@ -495,8 +632,11 @@ export default function App() {
         }),
       });
       setAutomationForm(deepClone(AUTOMATION_FORM_DEFAULTS));
-      const jobs = await fetchJSON("/automation/jobs?limit=100");
-      startTransition(() => setAutomationJobs(jobs));
+      await refreshCollections({
+        preferredProjectId: selectedProjectId,
+        silent: true,
+        refreshSelectedDetail: Boolean(selectedProjectId),
+      });
       setStatus({ tone: "success", message: "自动任务已创建" });
     } catch (error) {
       setStatus({ tone: "danger", message: error.message });
@@ -509,12 +649,33 @@ export default function App() {
     setBusyState(true, "自动任务执行中...");
     try {
       const run = await fetchJSON(`/automation/jobs/${jobId}/run`, { method: "POST" });
-      const jobs = await fetchJSON("/automation/jobs?limit=100");
-      startTransition(() => setAutomationJobs(jobs));
       if (run.project_id) {
         await refreshAll(run.project_id);
+      } else {
+        await refreshCollections({
+          preferredProjectId: selectedProjectId,
+          silent: true,
+          refreshSelectedDetail: Boolean(selectedProjectId),
+        });
       }
       setStatus({ tone: "success", message: `自动任务执行完成：${run.status}` });
+    } catch (error) {
+      setStatus({ tone: "danger", message: error.message });
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function handleCreateProjectFromAutomationRun(jobId, payload) {
+    setBusyState(true, "正在根据候选资料创建项目...");
+    try {
+      const response = await fetchJSON(`/automation/jobs/${jobId}/projects`, {
+        method: "POST",
+        body: JSON.stringify(payload),
+      });
+      await refreshAll(response.project_id);
+      setAutomationDrawerOpen(false);
+      setStatus({ tone: "success", message: `已根据候选资料生成项目 ${response.project_id}` });
     } catch (error) {
       setStatus({ tone: "danger", message: error.message });
     } finally {
@@ -529,8 +690,11 @@ export default function App() {
         method: "POST",
         body: JSON.stringify({ status: nextStatus }),
       });
-      const jobs = await fetchJSON("/automation/jobs?limit=100");
-      startTransition(() => setAutomationJobs(jobs));
+      await refreshCollections({
+        preferredProjectId: selectedProjectId,
+        silent: true,
+        refreshSelectedDetail: Boolean(selectedProjectId),
+      });
       setStatus({ tone: "success", message: "自动任务状态已更新" });
     } catch (error) {
       setStatus({ tone: "danger", message: error.message });
@@ -542,6 +706,14 @@ export default function App() {
   function handleWorkflowStepChange(step) {
     setWorkflowStep(step);
     setInspectorTab(WORKFLOW_TAB_MAP[step] || "script");
+  }
+
+  async function handleOpenProjectFromAutomation(projectId) {
+    if (!projectId) {
+      return;
+    }
+    setAutomationDrawerOpen(false);
+    await loadProject(projectId);
   }
 
   return (
@@ -584,6 +756,8 @@ export default function App() {
           busy={busy}
           collapsed={sidebarCollapsed}
           projectList={projectList}
+          automationJobs={automationJobs}
+          automationJobDetails={automationJobDetails}
           selectedProjectId={selectedProjectId}
           projectDetail={projectDetail}
           onSelectProject={(projectId) => loadProject(projectId)}
@@ -623,6 +797,8 @@ export default function App() {
           onRegenerateStoryboard={() => handleSaveScript(true)}
           onGenerateCurrent={() => handleGenerateImages(selectedShot ? [selectedShot.shot_id] : [])}
           onGenerateAll={() => handleGenerateImages([])}
+          onGenerateCurrentVideo={() => handleGenerateVideos(selectedShot ? [selectedShot.shot_id] : [])}
+          onGenerateAllVideos={() => handleGenerateVideos([])}
           onRenderFieldChange={(field, value) => setRenderForm((current) => ({ ...current, [field]: value }))}
           onRender={handleRender}
         />
@@ -644,9 +820,12 @@ export default function App() {
         busy={busy}
         form={automationForm}
         jobs={automationJobs}
+        jobDetails={automationJobDetails}
         onClose={() => setAutomationDrawerOpen(false)}
         onFieldChange={handleAutomationFormChange}
         onSubmit={handleAutomationSubmit}
+        onOpenProject={handleOpenProjectFromAutomation}
+        onCreateProjectFromRun={handleCreateProjectFromAutomationRun}
         onRunNow={handleRunAutomation}
         onToggleStatus={handleToggleAutomation}
       />

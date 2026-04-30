@@ -66,6 +66,15 @@ BLOCKED_URL_PARTS = (
     "mailto",
 )
 
+TOPIC_KEYWORDS = {
+    "policy_regulation": ("政策", "通知", "办法", "规则", "监管", "交易规则", "现货"),
+    "dispatch_operation": ("调度", "保供", "负荷", "频率", "运行", "迎峰度夏", "迎峰度冬"),
+    "new_energy": ("新能源", "风电", "光伏", "消纳", "储能", "源网荷储"),
+    "power_market": ("电力市场", "现货", "交易", "报价", "结算", "绿电", "辅助服务"),
+    "distribution_service": ("配电", "供电", "居民", "民生", "充电", "最后一公里"),
+    "equipment_maintenance": ("设备", "变电站", "线路", "巡检", "运维", "检修", "主变"),
+}
+
 
 @dataclass
 class LinkCandidate:
@@ -130,12 +139,41 @@ def fetch_latest_grid_items(
             : total_limit or config.total_fetch_limit
         ]
 
+    focused_items, focus_notes = filter_items_by_topics(items, config.focus_topics)
+    if focused_items:
+        items = focused_items
+    notes.extend(focus_notes)
+
     output_dir.mkdir(parents=True, exist_ok=True)
     (output_dir / "fetched_feed.json").write_text(
         json.dumps([asdict(item) for item in items], ensure_ascii=False, indent=2),
         encoding="utf-8",
     )
     return items, notes
+
+
+def filter_items_by_topics(items: list[GridNewsItem], focus_topics: tuple[str, ...] | list[str]) -> tuple[list[GridNewsItem], list[str]]:
+    topics = [topic for topic in focus_topics if topic in TOPIC_KEYWORDS]
+    if not topics:
+        return items, []
+
+    matched: list[GridNewsItem] = []
+    for item in items:
+        haystack = " ".join(
+            [
+                item.title,
+                item.summary,
+                item.content,
+                " ".join(item.tags),
+                item.content_category,
+            ]
+        )
+        if any(keyword in haystack for topic in topics for keyword in TOPIC_KEYWORDS[topic]):
+            matched.append(item)
+
+    if matched:
+        return matched, [f"Focused crawl kept {len(matched)} items for topics: {', '.join(topics)}."]
+    return items, [f"No fetched items matched topics: {', '.join(topics)}. Fell back to all fetched items."]
 
 
 def fetch_source_items(
