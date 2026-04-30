@@ -1,2 +1,0 @@
-
-62525c521eb92dcc96cf324fbec6a0fec305037a	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/yallist","integrity":null,"time":1774174889502,"size":"262","metadata":{"time":1774174889502,"url":"http://registry.npm.taobao.org/yallist","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/yallist"},"options":{"compress":true},"status":301}}

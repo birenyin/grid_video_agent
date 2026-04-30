@@ -1,0 +1,42 @@
+# IDE / editors
+.idea/
+.vscode/
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Node
+node_modules/
+.npm-cache/
+npm-debug.log*
+
+# Env
+.env
+.env.*
+!.env.example
+
+# Project runtime / caches / temp
+runtime/
+.tmp_test/
+tmp_*.html
+*.log
+
+# 个人/无关材料
+需求/
+ming-canal-report/
+ming_canal_ppt/
+test-presentation/
+pdf_page_extracts/
+xmu_*/
+xmu_*.png
+xmu_*.docx
+create_xmu_plan*.py
+尹积余-*.docx

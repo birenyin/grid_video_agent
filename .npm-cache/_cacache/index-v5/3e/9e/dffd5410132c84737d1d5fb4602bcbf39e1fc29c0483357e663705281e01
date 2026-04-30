@@ -1,2 +1,0 @@
-
-47c81d7474709fbd0aad18837c825264691a66b9	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/baseline-browser-mapping","integrity":null,"time":1774174889503,"size":"262","metadata":{"time":1774174889503,"url":"http://registry.npm.taobao.org/baseline-browser-mapping","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/baseline-browser-mapping"},"options":{"compress":true},"status":301}}

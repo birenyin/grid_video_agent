@@ -1,2 +1,0 @@
-
-fce010d2ebea5f38b73080b5047a68401b0b39a4	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/sass","integrity":null,"time":1774174888530,"size":"262","metadata":{"time":1774174888530,"url":"http://registry.npm.taobao.org/sass","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:28 GMT","location":"https://registry.npmmirror.com/sass"},"options":{"compress":true},"status":301}}

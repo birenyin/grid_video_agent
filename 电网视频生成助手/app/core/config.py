@@ -115,7 +115,7 @@ def get_settings() -> Settings:
         automation_poll_seconds=_as_float(os.getenv("AUTOMATION_POLL_SECONDS"), 30.0),
         default_reference_image_path=os.getenv(
             "DEFAULT_REFERENCE_IMAGE_PATH",
-            "F:/AICODING/需求/电网人物形象.png",
+            "assets/reference/person.png",
         ),
         llm_provider_priority=_split_csv(
             os.getenv("PROVIDER_PRIORITY_LLM"),

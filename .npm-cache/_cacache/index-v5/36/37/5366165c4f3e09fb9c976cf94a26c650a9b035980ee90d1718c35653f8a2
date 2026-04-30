@@ -1,2 +1,0 @@
-
-827e4458dff6b6372e6599e0b01d97d45e6afd85	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/@esbuild%2fwin32-arm64","integrity":null,"time":1774174889711,"size":"262","metadata":{"time":1774174889711,"url":"http://registry.npm.taobao.org/@esbuild%2fwin32-arm64","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:29 GMT","location":"https://registry.npmmirror.com/@esbuild%2fwin32-arm64"},"options":{"compress":true},"status":301}}

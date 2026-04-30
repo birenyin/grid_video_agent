@@ -1,2 +1,0 @@
-
-ff572c660e5c3a7f39c7d42a998d590a208e8769	{"key":"make-fetch-happen:request-cache:http://registry.npm.taobao.org/vite","integrity":null,"time":1774174888250,"size":"262","metadata":{"time":1774174888250,"url":"http://registry.npm.taobao.org/vite","reqHeaders":{"accept":"application/vnd.npm.install-v1+json; q=1.0, application/json; q=0.8, */*"},"resHeaders":{"content-type":"text/html","date":"Sun, 22 Mar 2026 10:21:28 GMT","location":"https://registry.npmmirror.com/vite"},"options":{"compress":true},"status":301}}
